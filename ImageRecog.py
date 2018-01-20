@@ -10,12 +10,25 @@ class ImageRecog:
         self.app = ClarifaiApp(api_key=config.conf['clarify_key'])
         self.model = self.app.models.get("general-v1.3")
         self.imageDir = imageDir
-        os.system('ffmpeg -r 1/3 -i ' + self.imageDir + '/image_%04d.png ' + self.imageDir + '/out.mp4')
+        os.system('ffmpeg -r 1/3 -i ' + self.imageDir + '/image_%04d.png ' + self.imageDir + '/out.mp4 &')
 
     def analyzeImages(self):
         imageArray = []
         for the_file in os.listdir(self.imageDir):
+            print(the_file)
             image = ClImage(file_obj=open(os.path.join(self.imageDir, the_file), 'rb'))
             imageArray.append(image)
         response = self.model.predict(imageArray)
         return response
+
+    def digestData(self):
+        print("digest")
+
+    def findEmotion(self):
+        print("finding emotion")
+
+    def findTheme(self):
+        print("Finding theme")
+
+    def findProduct(self):
+        print("Finding product")

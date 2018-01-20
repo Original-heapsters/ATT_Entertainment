@@ -55,6 +55,10 @@ def upload_album():
             file.save(filePath)
             fileCount += 1
     finalTagList = analyze(directory)
+    # videoPath = os.path.join(directory,"out.mp4")
+    # finalTagList["videoURL"] = videoPath
+    # response = {"videoURL":request.url_root + videoPath, "ClarifaiData" : finalTagList}
+    # return json.dumps(response, indent=4)
     return finalTagList
 
 @app.route('/sendvideo')
