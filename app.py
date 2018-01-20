@@ -22,6 +22,8 @@ def upload_album():
     fileUrls = []
     albumId = uuid.uuid4().hex
     folder = app.config['UPLOAD_FOLDER']
+    if not os.path.exists(folder):
+        os.makedirs(folder)
     for the_file in os.listdir(folder):
         print(the_file)
         file_path = os.path.join(folder, the_file)
