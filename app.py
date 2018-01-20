@@ -74,10 +74,15 @@ def preview_analysis():
     return json.dumps({"ERROR":"No json data found"})
 
 
-@app.route('/sendvideo')
-def send_video():
-    videoURL = request.url_root + "BOGUS"
-    return json.dumps({"url":videoURL})
+@app.route('/getvideo')
+def get_video():
+    for filename in glob2.glob(os.path.join(app.config['UPLOAD_FOLDER'], '**/*.mp4')):
+        print(filename)
+        # filePath = os.path.join(directory, 'image_{:04d}'.format(fileCount) + file.filename[filename.rfind('.'):])
+        outputURL = request.url_root + filename
+        return json.dumps({"VideoURL":outputURL})
+
+    return json.dumps({"ERROR":"No video found"})
 
 def analyze(imagesDir):
     recog = ImageRecog.ImageRecog(imageDir=imagesDir)
