@@ -41,6 +41,7 @@ def upload_album():
     print(fileList)
     # if user does not select file, browser also
     # submit a empty part without filename
+    fileCount = 0
     for file in fileList:
         if file.filename == '':
             return json.dumps({"ERROR":"filename is blank"}, indent=4)
@@ -49,9 +50,10 @@ def upload_album():
             directory = app.config['UPLOAD_FOLDER'] + '/' + albumId
             if not os.path.exists(directory):
                 os.makedirs(directory)
-            filePath = os.path.join(directory, filename)
+            filePath = os.path.join(directory, 'image_{:04d}'.format(fileCount) + file.filename[filename.rfind('.'):])
             fileUrls.append(request.url_root + filePath)
             file.save(filePath)
+            fileCount += 1
     finalTagList = analyze(directory)
     return finalTagList
 

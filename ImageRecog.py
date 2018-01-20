@@ -10,6 +10,7 @@ class ImageRecog:
         self.app = ClarifaiApp(api_key=config.conf['clarify_key'])
         self.model = self.app.models.get("general-v1.3")
         self.imageDir = imageDir
+        os.system('ffmpeg -r 1/3 -i ' + self.imageDir + '/image_%04d.png ' + self.imageDir + '/out.mp4')
 
     def analyzeImages(self):
         imageArray = []
