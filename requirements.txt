@@ -5,6 +5,7 @@ enum34==1.1.6
 Flask==0.12.2
 functools32==3.2.3.post2
 future==0.15.2
+glob2==0.6
 itsdangerous==0.24
 Jinja2==2.10
 jsonschema==2.5.1

@@ -1,4 +1,5 @@
 import os
+import json
 import config
 from clarifai import rest
 from clarifai.rest import ClarifaiApp
@@ -19,6 +20,9 @@ class ImageRecog:
             image = ClImage(file_obj=open(os.path.join(self.imageDir, the_file), 'rb'))
             imageArray.append(image)
         response = self.model.predict(imageArray)
+        jsonFile = os.path.join(self.imageDir, "imageAnalysis.json")
+        with open(jsonFile, 'w') as outfile:
+            json.dump(response, outfile)
         return response
 
     def digestData(self):

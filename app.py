@@ -1,5 +1,6 @@
 import json
 import os
+import glob2
 import shutil
 import uuid
 import ImageRecog
@@ -60,6 +61,18 @@ def upload_album():
     # response = {"videoURL":request.url_root + videoPath, "ClarifaiData" : finalTagList}
     # return json.dumps(response, indent=4)
     return finalTagList
+
+@app.route('/previewAnalysis')
+def preview_analysis():
+
+    for filename in glob2.glob(os.path.join(app.config['UPLOAD_FOLDER'], '**/*.json')):
+        print(filename)
+        try:
+            return json.dumps(json.load(open(filename)))
+        except ValueError:
+            return json.dumps({"ERROR":"No json data found"})
+    return json.dumps({"ERROR":"No json data found"})
+
 
 @app.route('/sendvideo')
 def send_video():
