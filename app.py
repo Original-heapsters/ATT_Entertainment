@@ -53,7 +53,7 @@ def upload_album():
             directory = app.config['UPLOAD_FOLDER'] + '/' + albumId
             if not os.path.exists(directory):
                 os.makedirs(directory)
-            filePath = os.path.join(directory, 'image_{:04d}'.format(fileCount) + file.filename[filename.rfind('.'):])
+            filePath = os.path.join(directory, 'image{:04d}'.format(fileCount) + file.filename[filename.rfind('.'):])
             fileUrls.append(request.url_root + filePath)
             file.save(filePath)
             fileCount += 1
@@ -74,6 +74,18 @@ def preview_analysis():
         except ValueError:
             return json.dumps({"ERROR":"No json data found"})
     return json.dumps({"ERROR":"No json data found"})
+
+@app.route('/metaAnalysis')
+def meta_analysis():
+
+    for filename in glob2.glob(os.path.join(app.config['UPLOAD_FOLDER'], '**/videoMeta.json')):
+        print(filename)
+        try:
+            return json.dumps(json.load(open(filename)))
+        except ValueError:
+            return json.dumps({"ERROR":"No json data found"})
+    return json.dumps({"ERROR":"No json data found"})
+
 
 
 @app.route('/getvideo')

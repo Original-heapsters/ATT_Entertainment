@@ -12,8 +12,11 @@ class ImageRecog:
     def __init__(self, imageDir):
         self.app = ClarifaiApp(api_key=config.conf['clarify_key'])
         self.model = self.app.models.get("general-v1.3")
+        self.logoModel = self.app.models.get("logo")
         self.imageDir = imageDir
         self.clarifaiData = {}
+        self.logoData = {}
+        self.imageMeta = {}
 
     def analyzeImages(self):
         imageArray = []
@@ -22,12 +25,14 @@ class ImageRecog:
             image = ClImage(file_obj=open(os.path.join(self.imageDir, the_file), 'rb'))
             imageArray.append(image)
         response = self.model.predict(imageArray)
+        logoResponse = self.logoModel.predict(imageArray)
         self.clarifaiData  = response
+        self.logoData = logoResponse
         self.digestData()
         return response
 
     def createVideo(self):
-        category = 'adventure'
+        category = 'happy'
         path, dirs, files = os.walk(self.imageDir).next()
         clip_count = len(files)
 
@@ -64,7 +69,7 @@ class ImageRecog:
         p.communicate()
         p.wait()
 
-        videoGenCommand = 'ffmpeg -y -r 1/3 -i ' + self.imageDir + '/image_%04d.png ' + self.imageDir + '/out.mp4'
+        videoGenCommand = 'ffmpeg -y -r 1/3 -i ' + self.imageDir + '/image%04d.png ' + self.imageDir + '/out.mp4'
         p = subprocess.Popen(videoGenCommand, stdout=subprocess.PIPE, shell=True)
         p.communicate()
         p.wait()
@@ -78,17 +83,52 @@ class ImageRecog:
         jsonFile = os.path.join(self.imageDir, "imageAnalysis.json")
         with open(jsonFile, 'w') as outfile:
             json.dump(self.clarifaiData, outfile)
+        self.digestData()
 
 
     def digestData(self):
-        print(json.dumps(self.clarifaiData))
-        print("digest")
+        imageCount = 0
+        for image in self.clarifaiData['outputs']:
+            concepts = image['data']['concepts']
+            emotion = self.findEmotion(concepts)
+            theme = self.findTheme(concepts)
+            product = self.findProduct(self.logoData['outputs'][imageCount], concepts)
+            timeOnScreen = {"start":3 * imageCount, "end":3 * imageCount + 3}
+            self.imageMeta[imageCount] = {"emotion" : emotion, "theme" : theme, "product" : product, "timing" : timeOnScreen}
+            print(json.dumps(concepts,indent=4))
+            imageCount += 1
+            jsonFile = os.path.join(self.imageDir, "videoMeta.json")
+            with open(jsonFile, 'w') as outfile:
+                json.dump(self.imageMeta, outfile)
+        print(json.dumps(self.imageMeta,indent=4))
 
-    def findEmotion(self):
-        print("finding emotion")
+    def findEmotion(self, concepts):
+        happyList = ['happy', 'happiness']
+        adventureList = ['outdoors']
+        partyList = ['joy']
+        determinedEmotion = 'happy'
 
-    def findTheme(self):
-        print("Finding theme")
+        for concept in concepts:
+            if concept['name'] in happyList:
+                determinedEmotion = "happy"
+                break
+            if concept['name'] in adventureList:
+                determinedEmotion = "adventure"
+                break
+            if concept['name'] in partyList:
+                determinedEmotion = "party"
+                break
+        return determinedEmotion
 
-    def findProduct(self):
-        print("Finding product")
+    def findTheme(self, concepts):
+        return concepts[0]['name']
+
+    def findProduct(self, logoConcepts, concepts):
+        product = "Could not find"
+        if len(logoConcepts) > 0:
+            if 'regions' in logoConcepts['data']:
+                if len(logoConcepts['data']['regions']) > 0:
+                    product = logoConcepts['data']['regions'][0]['data']['concepts'][0]['name']
+        else:
+            product = concepts[1]['name']
+        return product
