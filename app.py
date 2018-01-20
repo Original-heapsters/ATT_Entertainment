@@ -4,6 +4,7 @@ import glob2
 import shutil
 import uuid
 import ImageRecog
+from flask_cors import CORS
 from flask import Flask, request, flash, url_for, redirect, render_template, abort, send_from_directory
 from werkzeug.utils import secure_filename
 
@@ -12,6 +13,7 @@ ALLOWED_EXTENSIONS = set(['png', 'jpg', 'jpeg'])
 
 app = Flask(__name__)
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+CORS(app)
 
 @app.route('/')
 def index():
