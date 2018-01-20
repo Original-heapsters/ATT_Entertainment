@@ -89,6 +89,7 @@ def get_video():
 def analyze(imagesDir):
     recog = ImageRecog.ImageRecog(imageDir=imagesDir)
     finalPrediction = recog.analyzeImages()
+    recog.createVideo()
     return json.dumps(finalPrediction, indent=4, sort_keys=True)
 
 
