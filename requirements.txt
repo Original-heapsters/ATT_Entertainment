@@ -1,6 +1,14 @@
+clarifai==2.0.33
 click==6.7
+configparser==3.5.0
+enum34==1.1.6
 Flask==0.12.2
+functools32==3.2.3.post2
+future==0.15.2
 itsdangerous==0.24
 Jinja2==2.10
+jsonschema==2.5.1
 MarkupSafe==1.0
+Pillow==2.9.0
+requests==2.13.0
 Werkzeug==0.14.1
