@@ -52,13 +52,17 @@ def upload_album():
             filePath = os.path.join(directory, filename)
             fileUrls.append(request.url_root + filePath)
             file.save(filePath)
-    return json.dumps({"uploaded_photos":fileUrls}, indent=4)
+    finalTagList = analyze(directory)
+    return finalTagList
 
-@app.route('/analyze')
-def analyze():
-    recog = ImageRecog.ImageRecog()
-    finalPrediction = recog.analyzeImage()
-    print(json.dumps(finalPrediction, indent=4, sort_keys=True))
+@app.route('/sendvideo')
+def send_video():
+    videoURL = request.url_root + "BOGUS"
+    return json.dumps({"url":videoURL})
+
+def analyze(imagesDir):
+    recog = ImageRecog.ImageRecog(imageDir=imagesDir)
+    finalPrediction = recog.analyzeImages()
     return json.dumps(finalPrediction, indent=4, sort_keys=True)
 
 
