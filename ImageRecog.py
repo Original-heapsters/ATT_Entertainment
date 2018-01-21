@@ -1,5 +1,6 @@
 import os
 import json
+import glob2
 import config
 import random
 import subprocess
@@ -20,7 +21,7 @@ class ImageRecog:
 
     def analyzeImages(self):
         imageArray = []
-        for the_file in os.listdir(self.imageDir):
+        for the_file in sorted(os.listdir(self.imageDir)):
             print(the_file)
             image = ClImage(file_obj=open(os.path.join(self.imageDir, the_file), 'rb'))
             imageArray.append(image)
@@ -32,58 +33,64 @@ class ImageRecog:
         return response
 
     def createVideo(self):
-        category = 'happy'
         path, dirs, files = os.walk(self.imageDir).next()
         clip_count = len(files)
-
-        if not os.path.exists('./static/music/' + category + '/short/'):
-            os.makedirs('./static/music/' + category + '/short/')
-
-        musicDir = './static/music/'+ category
+        images = glob2.glob(os.path.join(self.imageDir, '**/*.png'))
         audioShortenCommand = 'ffmpeg -y -t 3 -i '
-        currentTime = 0.0
-        path, dirs, files = os.walk('./static/music/'+ category).next()
-        musicFileCount = len(files)
-        inputArray = []
+        muxCommand = "ffmpeg -y "
         complexFilter = ""
-        for count in range(0,clip_count):
+        currentClip = 0
+        timingLines = []
+        timingFile = open(self.imageDir + '/timing.ffconcat', 'w')
+        timingFile.write("ffconcat version 1.0\n")
+        for count in range(0,clip_count-1):
+            print(self.imageMeta)
+            print(int(count))
+            category = self.imageMeta[int(count)]["emotion"]
+            path, dirs, musicfiles = os.walk('./static/music/'+ category).next()
+            musicFileCount = len(musicfiles)
+            musicDir = './static/music/'+ category
+            if not os.path.exists('./static/music/' + category + '/short/'):
+                os.makedirs('./static/music/' + category + '/short/')
             # Choose random music file
-            musicFile = files[random.randint(0,musicFileCount-1)]
+            musicFile = musicfiles[random.randint(0,musicFileCount-1)]
             fullCommand = audioShortenCommand + './static/music/'+ category + '/' + musicFile + ' ./static/music/'+category + '/short/' + musicFile
             p = subprocess.Popen(fullCommand, stdout=subprocess.PIPE, shell=True)
             p.communicate()
             p.wait()
-            inputArray.append('-i ./static/music/'+ category + '/short/' + musicFile + ' ')
+            muxCommand += '-i ./static/music/'+ category + '/short/' + musicFile + ' '
             complexFilter += '[' + str(count) + ':0]'
-            currentTime += 0.3
-        muxCommand = "ffmpeg -y "
-        # muxCommand = "ffmpeg -i heavenShort.mp3 -i alexShort.mp3 -filter_complex '[0:0][1:0]concat=n=2:v=0:a=1[out]' -map '[out]' muxed.mp3"
-        currentTime = 0.0
-        for count in range(0,clip_count):
-            muxCommand += inputArray[count]
-            # Choose random music file
-        muxCommand += " -filter_complex '" + complexFilter + "concat=n=" + str(clip_count) + ":v=0:a=1[out]' -map '[out]' ./static/music/"+ category + "/muxed.mp3"
+            timingLines.append("file image000" + str(currentClip) + ".png \nduration 3 \n")
+            currentClip += 1
 
-        print(muxCommand)
+        for line in timingLines:
+            timingFile.write(line)
+        timingFile.close()
+            # Choose random music file
+        muxCommand += " -filter_complex '" + complexFilter + "concat=n=" + str(clip_count-1) + ":v=0:a=1[out]' -map '[out]' " + os.path.join(self.imageDir, "muxed.mp3")
+
         p = subprocess.Popen(muxCommand, stdout=subprocess.PIPE, shell=True)
         p.communicate()
         p.wait()
 
-        videoGenCommand = 'ffmpeg -y -r 1/3 -i ' + self.imageDir + '/image%04d.png ' + self.imageDir + '/out.mp4'
+
+
+        videoGenCommand = 'ffmpeg -y -safe 0 -i ' + os.path.join(self.imageDir, 'timing.ffconcat') + ' ' + os.path.join(self.imageDir, 'out.mp4')
         p = subprocess.Popen(videoGenCommand, stdout=subprocess.PIPE, shell=True)
         p.communicate()
         p.wait()
 
-        combineCommand = "ffmpeg -y -i " + self.imageDir + "/out.mp4 -i ./static/music/" + category + "/muxed.mp3 -c copy " + self.imageDir + "/combined.mp4"
+        combineCommand = "ffmpeg -y -i " + self.imageDir + "/out.mp4 -i " + os.path.join(self.imageDir, "muxed.mp3") + " -c copy " + self.imageDir + "/combined.mp4"
         p = subprocess.Popen(combineCommand, stdout=subprocess.PIPE, shell=True)
         p.communicate()
         p.wait()
 
+        if os.path.exists(os.path.join(self.imageDir, "muxed.mp3")):
+            os.remove(os.path.join(self.imageDir, "muxed.mp3"))
         os.remove(os.path.join(self.imageDir, "out.mp4") )
         jsonFile = os.path.join(self.imageDir, "imageAnalysis.json")
         with open(jsonFile, 'w') as outfile:
             json.dump(self.clarifaiData, outfile)
-        self.digestData()
 
 
     def digestData(self):
